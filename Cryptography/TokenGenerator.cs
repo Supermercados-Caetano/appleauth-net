@@ -31,13 +31,16 @@ namespace AppleAuth.Cryptography
         {
             var key = GetFormattedPrivateKey(privateKey);
 
-            var cngKey = CngKey.Import(Convert.FromBase64String(key), CngKeyBlobFormat.Pkcs8PrivateBlob);
-
-            var ecDsaCng = new ECDsaCng(cngKey);
-            ecDsaCng.HashAlgorithm = CngAlgorithm.ECDsaP256;
+            //var cngKey = CngKey.Import(Convert.FromBase64String(key), CngKeyBlobFormat.Pkcs8PrivateBlob);
+            var ecdKey = ECDsa.Create();
+            ecdKey.ImportPkcs8PrivateKey(Convert.FromBase64String(key), out _);
+            var ecdkey = new ECDsaSecurityKey(ecdKey);
+            ecdkey.KeyId = keyId;
+            //var ecDsaCng = new ECDsaCng(cngKey);
+            //ecDsaCng.HashAlgorithm = CngAlgorithm.ECDsaP256;
 
             var signingCredentials = new SigningCredentials(
-              new ECDsaSecurityKey(ecDsaCng), SecurityAlgorithms.EcdsaSha256);
+              ecdkey, SecurityAlgorithms.EcdsaSha256);
 
             var now = DateTime.UtcNow;
 
@@ -56,7 +59,7 @@ namespace AppleAuth.Cryptography
                 expires: now.AddMinutes(5),
                 signingCredentials: signingCredentials);
 
-            token.Header.Add(ClaimConstants.KeyID, keyId);
+            //token.Header.Add(ClaimConstants.KeyID, keyId);
 
             return _tokenHandler.WriteToken(token);
         }
